@@ -360,11 +360,35 @@ elif page == "🔍 Vehicle Finder":
         (df['Seats'].isin(seats_needed))
     ]
     
-    if preferred_brands:
-        filtered = filtered[filtered['Brand'].isin(preferred_brands)]
-    
-    filtered = filtered.sort_values(sort_by, ascending=(sort_by == 'Price'))
-    
+    # Map display names to actual column names
+sort_options = {
+    'Price': 'Price_USD',
+    'Range (km)': 'Range_km',
+    'Efficiency (km/kWh)': 'Efficiency_km_kWh',
+    'Market Score': 'Market_Score'
+}
+
+sort_display = st.selectbox("Sort By", list(sort_options.keys()))
+sort_by = sort_options[sort_display]
+
+# Filter data
+filtered = df[
+    (df['Price_USD'] >= budget[0]) &
+    (df['Price_USD'] <= budget[1]) &
+    (df['Range_km'] >= min_range) &
+    (df['Charge_Time_hrs'] <= max_charge_time) &
+    (df['Seats'].isin(seats_needed))
+]
+
+if preferred_brands:
+    filtered = filtered[filtered['Brand'].isin(preferred_brands)]
+
+# Safe sorting with error handling
+if sort_by in filtered.columns:
+    filtered = filtered.sort_values(sort_by, ascending=(sort_by == 'Price_USD'))
+else:
+    st.error(f"Column '{sort_by}' not found. Sorting by Price_USD instead.")
+    filtered = filtered.sort_values('Price_USD', ascending=True)
     st.subheader(f"✅ Found {len(filtered)} matching vehicles")
     
     if len(filtered) > 0:
